@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16.2-alpine
+    container_name: fyora-community-db
+    environment:
+      POSTGRES_DB: fyora_community_db
+      POSTGRES_USER: fyora_user
+      POSTGRES_PASSWORD: fyora_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fyora_user -d fyora_community_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
