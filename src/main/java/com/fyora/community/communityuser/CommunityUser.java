@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +37,14 @@ public class CommunityUser {
     // mesma logica dos posts de um usuario
     @OneToMany(mappedBy = "communityUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Comment> comments = new ArrayList<>();
+
+    @PrePersist
+    void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now(ZoneOffset.UTC);
+        }
+    }
+
 
     // metodos para garantir consistencia dos relacionamentos bidirecionais
     public void addPost(Post post) {

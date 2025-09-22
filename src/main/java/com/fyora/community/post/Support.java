@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Entity
 @Table(name = "supports")
@@ -29,4 +30,11 @@ public class Support {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_user_id", nullable = false)
     private CommunityUser communityUser;
+
+    @PrePersist
+    void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = LocalDateTime.now(ZoneOffset.UTC);
+        }
+    }
 }
