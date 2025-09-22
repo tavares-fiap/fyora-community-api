@@ -187,3 +187,12 @@ Resposta:
 * **Pedro Henrique Pedrosa Tavares** – RM97877
 * **Rodrigo Brasileiro** – RM98952
 * **Thiago Jardim de Oliveira** – RM551624
+
+
+## Diagrama de arquitetura
+<img width="1136" height="762" alt="FyoraCommunity-Architecture" src="https://github.com/user-attachments/assets/97ca8034-68c7-49d1-bc0b-3b08ffef68f2" />
+
+
+## Diagrama de entidades
+<img width="990" height="523" alt="FyoraCommunity-ER" src="https://github.com/user-attachments/assets/36925b3a-47bd-412f-8e66-0a73c4f9d964" />
+
