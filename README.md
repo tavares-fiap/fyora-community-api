@@ -1,125 +1,189 @@
 # Fyora Community API
 
-API REST para a funcionalidade de **Comunidade** do Fyora App, uma solução tecnológica de impacto social criada para apoiar pessoas que enfrentam o **jogo problemático** e promover **bem-estar, autocontrole e apoio coletivo**.
+API REST desenvolvida em **Java Spring Boot** para a funcionalidade de **Comunidade** da plataforma Fyora.  
+Permite que usuários anônimos criem posts, classifiquem com tags, apoiem (curtidas) e comentem em publicações, simulando a dinâmica de uma rede social interna e anônima.
 
 ---
 
-## 🌍 Sobre o Fyora App
-
-O **Fyora** é uma plataforma móvel gratuita, anônima e empática, concebida como uma resposta à epidemia silenciosa do jogo problemático no Brasil. Desenvolvida com apoio da **XP Inc.**, busca oferecer ferramentas de autocontrole, suporte emocional, educação financeira e conexão com redes de apoio.
-
-A **aba de Comunidade**, representada por esta API, é parte essencial do ecossistema, permitindo que os usuários compartilhem experiências, encontrem apoio mútuo e fortaleçam vínculos sociais durante sua jornada de recuperação.
+## 📝 Descrição do Projeto
+A Fyora Community API implementa:
+- Criação de **usuários anônimos** com nome gerado automaticamente.
+- **Posts** de texto, com limite de caracteres e categorização por **tags** (vitória, desabafo, gatilhos, motivação, dúvida).
+- Possibilidade de **apoiar posts** (curtidas únicas por usuário).
+- **Comentários** em posts, também anônimos.
+- Feed de posts paginado, retornando os mais recentes primeiro.
+- Tratamento centralizado de erros e validações de entrada.
 
 ---
 
-## 🚀 Funcionalidades da API
+## ⚙️ Passos de Configuração e Execução
 
-- 📌 **Criação e gestão de posts** na comunidade  
-- 💬 **Comentários** e interações em posts  
-- 👍 **Curtidas/Reações** em conteúdos da comunidade  
-- 👤 **Gestão de usuários** (criação, autenticação e associação a posts/comentários)  
-- 🔍 **Busca e listagem** de publicações com filtros  
+### Pré-requisitos
+- **Java 17+**
+- **Maven 3.9+**
+- **Docker** e **Docker Compose**
+
+### 1) Clonar o repositório
+```bash
+git clone https://github.com/tavares-fiap/fyora-community-api.git
+cd fyora-community-api
+````
+
+### 2) Subir banco de dados
+
+```bash
+docker compose up -d
+```
+
+### 3) Rodar a aplicação
+
+```bash
+./mvnw spring-boot:run
+```
+
+ou via IDE rodando o método main
+
+A API ficará disponível em:
+`http://localhost:8080/api/community`
+
+### 4) Banco de Dados
+
+* **URL**: `jdbc:postgresql://localhost:5432/fyora_community_db`
+* **Usuário**: `fyora_user`
+* **Senha**: `fyora_password`
+
+O schema é gerenciado automaticamente pelo **Flyway**.
+
+---
+
+## 📌 Exemplos de Requisições e Respostas
+
+### Criar Usuário Anônimo
+
+**POST** `/api/community/users`
+Resposta:
+
+```json
+{
+  "id": 1,
+  "communityName": "Fênix Serena #4821",
+  "createdAt": "2025-09-22T00:00:00Z"
+}
+```
+
+---
+
+### Criar Post
+
+**POST** `/api/community/posts`
+
+```json
+{
+  "communityUserId": 1,
+  "content": "Hoje consegui não apostar. Me sentindo bem!",
+  "tags": ["VITORIA", "MOTIVACAO"]
+}
+```
+
+Resposta:
+
+```json
+{
+  "id": 10,
+  "content": "Hoje consegui não apostar. Me sentindo bem!",
+  "createdAt": "2025-09-22T00:10:00Z",
+  "authorName": "Fênix Serena #4821",
+  "tags": ["VITORIA", "MOTIVACAO"],
+  "supportsCount": 0
+}
+```
+
+---
+
+### Listar Feed (paginado)
+
+**GET** `/api/community/posts?page=0&size=5`
+Resposta:
+
+```json
+{
+  "content": [
+    {
+      "id": 10,
+      "content": "Hoje consegui não apostar. Me sentindo bem!",
+      "createdAt": "2025-09-22T00:10:00Z",
+      "authorName": "Fênix Serena #4821",
+      "tags": ["VITORIA","MOTIVACAO"],
+      "supportsCount": 0
+    }
+  ],
+  "totalPages": 1,
+  "totalElements": 1,
+  "size": 5,
+  "number": 0
+}
+```
+
+---
+
+### Apoiar um Post
+
+**POST** `/api/community/posts/{id}/support?userId=1`
+Erro se usuário já apoiou: `422 BusinessRule`.
+
+---
+
+### Desfazer apoio
+
+**DELETE** `/api/community/posts/{POST_ID}/support?userId={USER_ID}`
+
+---
+
+### Comentar em um Post
+
+**POST** `/api/community/posts/{id}/comments`
+
+```json
+{
+  "communityUserId": 1,
+  "content": "Tamo junto!"
+}
+```
+
+Resposta:
+
+```json
+{
+  "id": 55,
+  "content": "Tamo junto!",
+  "createdAt": "2025-09-22T00:15:00Z",
+  "authorName": "Fênix Serena #4821"
+}
+```
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Java 17**  
-- **Spring Boot** (REST API)  
-- **Maven** (gestão de dependências)  
-- **Docker / Docker Compose** (infraestrutura de containers)  
-- **Banco de Dados Relacional** (via configuração em `docker-compose.yml`)  
+* **Java 17**
+* **Spring Boot 3.5.6**
+
+  * Spring Web
+  * Spring Data JPA
+  * Bean Validation
+* **PostgreSQL** (Docker)
+* **Flyway** (migrações de banco de dados)
+* **Lombok**
+* **Maven**
+* **Postman** (testes manuais de endpoints)
+* **Docker Compose**
 
 ---
 
-## 📂 Estrutura do Projeto
+## 👥 Integrantes
 
-```bash
-fyora-community-api/
-│── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   ├── com/
-│   │   │   │   ├── fyora/
-│   │   │   │   │   ├── community/
-│   │   │   │   │   │   ├── controller/
-│   │   │   │   │   │   ├── service/
-│   │   │   │   │   │   ├── repository/
-│   │   │   │   │   │   ├── model/
-│   │   │   │   │   │   ├── dto/
-│   │   │   │   │   │   └── config/
-│   │   │   └── (outras packages utilitárias, autenticação etc.)
-│   │   └── resources/
-│   │       ├── application.yml (ou application.properties)
-│   │       └── outras configurações / arquivos estáticos (templates, etc.)
-│   └── test/
-│       ├── java/
-│       │   └── com/
-│       │       └── fyora/
-│       │           └── community/
-│       │               └── (testes unitários e de integração)
-│       └── resources/
-│           └── (recursos de teste)
-│── pom.xml
-│── docker-compose.yml
-│── mvnw / mvnw.cmd
-```
-
-## ⚙️ Como Executar Localmente
-
-### Pré-requisitos
-- [Java 17+](https://adoptium.net/)  
-- [Maven](https://maven.apache.org/)  
-- [Docker](https://www.docker.com/)  
-
-### Passos
-```bash
-# Clonar o repositório
-git clone https://github.com/tavares-fiap/fyora-community-api.git
-cd fyora-community-api
-
-# Subir infraestrutura via Docker
-docker-compose up -d
-
-# Rodar a aplicação
-./mvnw spring-boot:run
-````
-A API estará disponível em:
-👉 http://localhost:8080/api/community
-
----
-
-## 📖 Endpoints Principais (exemplo)
-
-| Método | Endpoint                   | Descrição                     |
-|--------|----------------------------|--------------------------------|
-| GET    | `/posts`                   | Lista todos os posts           |
-| POST   | `/posts`                   | Cria um novo post              |
-| GET    | `/posts/{id}`              | Detalhes de um post específico |
-| POST   | `/posts/{id}/comments`     | Adiciona comentário            |
-| POST   | `/posts/{id}/like`         | Curte um post                  |
-
----
-
-## 🎯 Objetivo da Comunidade Fyora
-
-- Criar um **ambiente seguro** e acolhedor para troca de experiências.  
-- Reduzir o **isolamento social** associado ao transtorno de jogo.  
-- Incentivar **apoio mútuo e resiliência coletiva**.  
-
----
-
-## Integrantes
-
-GUILHERME ROCHA BIANCHINI - RM97974  
-NIKOLAS RODRIGUES MOURA DOS SANTOS - RM551566  
-PEDRO HENRIQUE PEDROSA TAVARES - RM97877  
-RODRIGO BRASILEIRO - RM98952  
-THIAGO JARDIM DE OLIVEIRA - RM551624  
-
----
-
-## 📜 Licença
-
-Este projeto é open-source sob a licença MIT.  <br>
-Projeto desenvolvido pela equipe TechPulse Global Network para o Challenge de Arquitetura orientada a Servicos e Web Services da FIAP.
+* **Guilherme Rocha Bianchini** – RM97974
+* **Nikolas Rodrigues Moura dos Santos** – RM551566
+* **Pedro Henrique Pedrosa Tavares** – RM97877
+* **Rodrigo Brasileiro** – RM98952
+* **Thiago Jardim de Oliveira** – RM551624
