@@ -196,3 +196,23 @@ Resposta:
 ## Diagrama de entidades
 <img width="990" height="523" alt="FyoraCommunity-ER" src="https://github.com/user-attachments/assets/36925b3a-47bd-412f-8e66-0a73c4f9d964" />
 
+
+
+## Casos de uso
+
+<img width="1027" height="635" alt="Seq-CreatePost" src="https://github.com/user-attachments/assets/6a4bf285-8d1b-49ee-bd67-0c61ff0b96d1" />
+
+
+<img width="1218" height="786" alt="Seq-SupportPost" src="https://github.com/user-attachments/assets/38306cf0-dede-4d6c-a603-1b4492e61881" />
+
+
+<img width="1078" height="556" alt="Seq-CreateUser" src="https://github.com/user-attachments/assets/4e6d28fb-9d76-4e16-bbee-a1f4c7692a8d" />
+
+
+<img width="1272" height="572" alt="Seq-CommentPost" src="https://github.com/user-attachments/assets/0e832002-ac41-4344-8a11-caedd903696a" />
+
+
+
+
+
+
