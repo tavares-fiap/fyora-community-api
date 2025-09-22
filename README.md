@@ -109,9 +109,13 @@ A API estará disponível em:
 
 ---
 
-## 🤝 Contribuição
+## Integrantes
 
-Sinta-se à vontade para abrir issues e pull requests. Toda contribuição é bem-vinda para aprimorar este projeto e ajudar a Fyora a impactar positivamente mais vidas.
+GUILHERME ROCHA BIANCHINI - RM97974  
+NIKOLAS RODRIGUES MOURA DOS SANTOS - RM551566  
+PEDRO HENRIQUE PEDROSA TAVARES - RM97877  
+RODRIGO BRASILEIRO - RM98952  
+THIAGO JARDIM DE OLIVEIRA - RM551624  
 
 ---
 
