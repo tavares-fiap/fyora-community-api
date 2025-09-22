@@ -29,6 +29,9 @@ public class Post {
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(name = "supports_count", nullable = false)
+    private Integer supportsCount = 0;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_user_id", nullable = false) // coluna de chave estrangeira na tabela 'posts'
     private CommunityUser communityUser;
