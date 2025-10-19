@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size;
 import java.util.Set;
 
 public record DadosCadastroPost(
-        @NotNull Long communityUserId,
+        // @NotNull Long communityUserId,
         @NotBlank @Size(max = 500) String content,
         Set<@NotBlank String> tags
 ) {}

@@ -5,6 +5,7 @@ import com.fyora.community.comment.dto.DadosListagemComment;
 import com.fyora.community.post.dto.DadosCadastroPost;
 import com.fyora.community.post.dto.DadosDetalhePost;
 import com.fyora.community.post.dto.DadosListagemPost;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -26,17 +27,20 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 @Tag(name = "Community Posts", description = "Endpoints para criação, listagem e interação (apoio/comentários) em posts da comunidade.")
 public class PostController {
 
-    private final PostService service;
+    private final PostServiceInterface service;
 
     @PostMapping
     @Operation(
             summary = "Cria um post",
-            description = "Cria um novo post na comunidade e retorna os detalhes do post criado."
+            description = "Cria um novo post na comunidade e retorna os detalhes do post criado.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Post criado com sucesso"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos"),
-            @ApiResponse(responseCode = "401", description = "Não autorizado")
+            @ApiResponse(responseCode = "401", description = "Não autorizado"),
+            @ApiResponse(responseCode = "500", description = "Erro interno do servidor. Não autorizado"),
+            @ApiResponse(responseCode = "422", description = "TAG INVÁLIDA!")
     })
     public ResponseEntity<DadosDetalhePost> criar(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
@@ -62,51 +66,53 @@ public class PostController {
     @PostMapping("/{id}/support")
     @Operation(
             summary = "Apoiar um post",
-            description = "Registra apoio (ex.: like) do usuário ao post."
+            description = "Registra apoio (ex.: like) do usuário ao post.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Apoio registrado"),
             @ApiResponse(responseCode = "404", description = "Post ou usuário não encontrado"),
-            @ApiResponse(responseCode = "401", description = "Não autorizado")
+            @ApiResponse(responseCode = "401", description = "Não autorizado"),
+            @ApiResponse(responseCode = "500", description = "Não autorizado")
     })
     public ResponseEntity<Void> apoiar(
             @Parameter(description = "ID do post a apoiar", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "ID do usuário que apoia", required = true, example = "123")
-            @RequestParam Long userId) {
-        service.apoiar(id, userId);
+            @PathVariable Long id) {
+        service.apoiar(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}/support")
     @Operation(
             summary = "Desfazer apoio em um post",
-            description = "Remove o apoio do usuário previamente registrado no post."
+            description = "Remove o apoio do usuário previamente registrado no post.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Apoio removido"),
             @ApiResponse(responseCode = "404", description = "Post ou usuário não encontrado"),
-            @ApiResponse(responseCode = "401", description = "Não autorizado")
+            @ApiResponse(responseCode = "401", description = "Não autorizado"),
+            @ApiResponse(responseCode = "500", description = "Não autorizado")
     })
     public ResponseEntity<Void> desfazerApoio(
             @Parameter(description = "ID do post", required = true)
-            @PathVariable Long id,
-            @Parameter(description = "ID do usuário que removerá o apoio", required = true, example = "123")
-            @RequestParam Long userId) {
-        service.desfazerApoio(id, userId);
+            @PathVariable Long id) {
+        service.desfazerApoio(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/comments")
     @Operation(
             summary = "Comentar em um post",
-            description = "Cria um novo comentário em um post específico."
+            description = "Cria um novo comentário em um post específico.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Comentário criado"),
             @ApiResponse(responseCode = "400", description = "Dados inválidos"),
             @ApiResponse(responseCode = "404", description = "Post não encontrado"),
-            @ApiResponse(responseCode = "401", description = "Não autorizado")
+            @ApiResponse(responseCode = "401", description = "Não autorizado"),
+            @ApiResponse(responseCode = "500", description = "Não autorizado")
     })
     public ResponseEntity<DadosListagemComment> comment(
             @Parameter(description = "ID do post a ser comentado", required = true)
@@ -116,6 +122,21 @@ public class PostController {
             )
             @org.springframework.web.bind.annotation.RequestBody @Valid DadosCadastroComment dto) {
         return ResponseEntity.status(201).body(service.comment(id, dto));
+    }
+
+    @GetMapping("/{id}/comments")
+    @Operation(
+            summary = "Ver comentarios de um post",
+            description = "Ver comentarios de um post específico."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Comentarios retornados com sucesso")
+    })
+    public ResponseEntity<Page<DadosListagemComment>> commentFeed(
+            @Parameter(description = "ID do post", required = true)
+            @PathVariable Long id,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(service.commentFeed(id, pageable));
     }
 
 }

@@ -21,6 +21,10 @@ public class CommunityUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_account_id", unique = true)
+    private com.fyora.community.auth.UserAccount userAccount;
+
     // usuario tem "nome de comunidade" generico para manter anonimato
     @Column(name = "community_name", nullable = false, unique = true)
     private String communityName;

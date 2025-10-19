@@ -26,4 +26,15 @@ public class CommunityUserService {
     public CommunityUser getById(Long id) {
         return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException("CommunityUser not found"));
     }
+
+    @Transactional
+    public CommunityUser getOrCreateByAccount(com.fyora.community.auth.UserAccount account) {
+        return repository.findByUserAccountId(account.getId())
+                .orElseGet(() -> {
+                    CommunityUser u = new CommunityUser();
+                    u.setCommunityName(generator.gerarUnico());
+                    u.setUserAccount(account);
+                    return repository.save(u);
+                });
+    }
 }

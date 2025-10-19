@@ -1,5 +1,7 @@
 package com.fyora.community.common.exception;
 
+import com.fyora.community.auth.exception.InvalidCredentialsException;
+import com.fyora.community.auth.exception.UsernameAlreadyExistsException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +37,18 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({BusinessException.class, DataIntegrityViolationException.class})
     public ResponseEntity<ErrorPayload> business(RuntimeException ex) {
         return ResponseEntity.status(422).body(new ErrorPayload(Instant.now(), 422, "BusinessRule", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<ErrorPayload> usernameAlreadyExists(UsernameAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ErrorPayload(Instant.now(), 409, "UsernameAlreadyExists", ex.getMessage()));
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorPayload> invalidCredentials(InvalidCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorPayload(Instant.now(), 401, "InvalidCredentials", ex.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
