@@ -480,3 +480,296 @@ Rodrigo Brasileiro – RM98952
 
 Thiago Jardim de Oliveira – RM551624
 
+```markdown
+## 🏗️ Diagramas de Arquitetura
+
+### Arquitetura Geral
+```plantuml
+@startuml
+!theme plain
+title Fyora Community API - Arquitetura Geral
+
+package "Cliente" {
+  [Frontend/Postman] as Client
+}
+
+package "API Gateway/Load Balancer" {
+  [Nginx/API Gateway] as Gateway
+}
+
+package "Aplicação Spring Boot" {
+  package "Controllers" {
+    [AuthController] as AuthCtrl
+    [PostController] as PostCtrl
+    [MeController] as MeCtrl
+  }
+  
+  package "Services" {
+    [AuthService] as AuthSvc
+    [PostService] as PostSvc
+    [CommunityUserService] as UserSvc
+  }
+  
+  package "Security" {
+    [JwtTokenProvider] as JWT
+    [JwtAuthenticationFilter] as Filter
+    [SecurityConfig] as SecConfig
+  }
+  
+  package "Repositories" {
+    [UserAccountRepository] as UserRepo
+    [PostRepository] as PostRepo
+    [CommentRepository] as CommentRepo
+  }
+}
+
+package "Banco de Dados" {
+  database "PostgreSQL" as DB {
+    [user_accounts]
+    [community_users]
+    [posts]
+    [comments]
+    [tags]
+    [supports]
+  }
+}
+
+package "Documentação" {
+  [Swagger UI] as Swagger
+  [OpenAPI Spec] as OpenAPI
+}
+
+Client --> Gateway
+Gateway --> AuthCtrl
+Gateway --> PostCtrl
+Gateway --> MeCtrl
+
+AuthCtrl --> AuthSvc
+PostCtrl --> PostSvc
+MeCtrl --> AuthSvc
+
+AuthSvc --> UserRepo
+PostSvc --> PostRepo
+PostSvc --> CommentRepo
+UserSvc --> UserRepo
+
+Filter --> JWT
+SecConfig --> Filter
+
+UserRepo --> DB
+PostRepo --> DB
+CommentRepo --> DB
+
+Swagger --> OpenAPI
+OpenAPI --> PostCtrl
+OpenAPI --> AuthCtrl
+
+@enduml
+```
+
+### Fluxo de Autenticação
+```plantuml
+@startuml
+!theme plain
+title Fluxo de Autenticação JWT
+
+actor "Cliente" as Client
+participant "AuthController" as Auth
+participant "AuthService" as Service
+participant "UserAccountRepository" as Repo
+participant "JwtTokenProvider" as JWT
+participant "BCryptPasswordEncoder" as BCrypt
+database "PostgreSQL" as DB
+
+== Registro de Usuário ==
+Client -> Auth: POST /api/auth/register
+Auth -> Service: register(RegisterRequest)
+Service -> Repo: existsByUsername()
+Repo -> DB: SELECT username
+DB --> Repo: resultado
+Repo --> Service: boolean
+alt Username já existe
+  Service --> Auth: UsernameAlreadyExistsException
+  Auth --> Client: 409 Conflict
+else Username disponível
+  Service -> BCrypt: encode(password)
+  BCrypt --> Service: passwordHash
+  Service -> Repo: save(UserAccount)
+  Repo -> DB: INSERT user_accounts
+  DB --> Repo: UserAccount salvo
+  Repo --> Service: UserAccount
+  Service --> Auth: void
+  Auth --> Client: 204 No Content
+end
+
+== Login ==
+Client -> Auth: POST /api/auth/login
+Auth -> Service: login(LoginRequest)
+Service -> Repo: findByUsername()
+Repo -> DB: SELECT * FROM user_accounts
+DB --> Repo: UserAccount
+Repo --> Service: UserAccount
+Service -> BCrypt: matches(password, hash)
+BCrypt --> Service: boolean
+alt Credenciais inválidas
+  Service --> Auth: InvalidCredentialsException
+  Auth --> Client: 401 Unauthorized
+else Credenciais válidas
+  Service -> JWT: generate(username, role)
+  JWT --> Service: JWT Token
+  Service --> Auth: JWT Token
+  Auth --> Client: 200 OK + Token
+end
+
+== Acesso a Endpoint Protegido ==
+Client -> Auth: GET /api/community/posts (Authorization: Bearer token)
+Auth -> JWT: validate(token)
+JWT --> Auth: DecodedJWT
+Auth -> Auth: setAuthentication()
+Auth --> Client: 200 OK + Dados
+
+@enduml
+```
+
+### Modelo de Dados
+```plantuml
+@startuml
+!theme plain
+title Modelo de Dados - Entidades e Relacionamentos
+
+entity "UserAccount" {
+  * id : BIGINT <<PK>>
+  --
+  * username : VARCHAR(255) <<UK>>
+  * password_hash : VARCHAR(255)
+  * role : VARCHAR(50)
+  * created_at : TIMESTAMP
+}
+
+entity "CommunityUser" {
+  * id : BIGINT <<PK>>
+  --
+  * community_name : VARCHAR(255) <<UK>>
+  * created_at : TIMESTAMP
+  * user_account_id : BIGINT <<FK>>
+}
+
+entity "Post" {
+  * id : BIGINT <<PK>>
+  --
+  * content : VARCHAR(1000)
+  * created_at : TIMESTAMP
+  * supports_count : INTEGER
+  * community_user_id : BIGINT <<FK>>
+}
+
+entity "Comment" {
+  * id : BIGINT <<PK>>
+  --
+  * content : VARCHAR(500)
+  * created_at : TIMESTAMP
+  * post_id : BIGINT <<FK>>
+  * community_user_id : BIGINT <<FK>>
+}
+
+entity "Tag" {
+  * id : BIGINT <<PK>>
+  --
+  * type : VARCHAR(255) <<UK>>
+}
+
+entity "Support" {
+  * id : BIGINT <<PK>>
+  --
+  * created_at : TIMESTAMP
+  * post_id : BIGINT <<FK>>
+  * community_user_id : BIGINT <<FK>>
+}
+
+entity "PostTags" {
+  * post_id : BIGINT <<PK>>
+  * tag_id : BIGINT <<PK>>
+}
+
+UserAccount ||--o| CommunityUser : "tem"
+CommunityUser ||--o{ Post : "cria"
+CommunityUser ||--o{ Comment : "comenta"
+CommunityUser ||--o{ Support : "apoia"
+Post ||--o{ Comment : "possui"
+Post ||--o{ Support : "recebe"
+Post ||--o{ PostTags : "tem"
+Tag ||--o{ PostTags : "aplicada em"
+
+@enduml
+```
+
+### Fluxo de Criação de Post
+```plantuml
+@startuml
+!theme plain
+title Fluxo de Criação de Post
+
+actor "Cliente" as Client
+participant "PostController" as Controller
+participant "PostService" as Service
+participant "CurrentUserService" as CurrentUser
+participant "CommunityUserService" as UserService
+participant "TagRepository" as TagRepo
+participant "PostRepository" as PostRepo
+database "PostgreSQL" as DB
+
+Client -> Controller: POST /api/community/posts
+note right: Authorization: Bearer token
+
+Controller -> Service: criar(DadosCadastroPost)
+
+== Validação de Conteúdo ==
+Service -> Service: validatePostContent()
+note right: Verifica se conteúdo tem 3-1000 caracteres
+
+== Obter Usuário Atual ==
+Service -> CurrentUser: requireUserAccount()
+CurrentUser --> Service: UserAccount
+
+Service -> UserService: getOrCreateByAccount()
+UserService -> DB: SELECT community_user WHERE user_account_id
+alt Usuário não existe
+  UserService -> UserService: gerarNomeComunitario()
+  UserService -> DB: INSERT community_users
+  DB --> UserService: CommunityUser criado
+else Usuário existe
+  DB --> UserService: CommunityUser existente
+end
+UserService --> Service: CommunityUser
+
+== Validação e Associação de Tags ==
+alt Tags fornecidas
+  loop Para cada tag
+    Service -> Service: TagType.valueOf(tag.toUpperCase())
+    Service -> TagRepo: findByType(tagType)
+    TagRepo -> DB: SELECT * FROM tags WHERE type
+    DB --> TagRepo: Tag
+    TagRepo --> Service: Tag
+  end
+  Service -> Service: validateAndSetTags()
+  note right: Verifica limite de 5 tags
+end
+
+== Criação do Post ==
+Service -> Service: new Post()
+Service -> Service: setContent()
+Service -> Service: setCommunityUser()
+Service -> Service: addTag() para cada tag
+
+Service -> PostRepo: save(Post)
+PostRepo -> DB: INSERT posts
+DB --> PostRepo: Post salvo
+PostRepo --> Service: Post
+
+== Retorno ==
+Service -> Service: new DadosDetalhePost()
+Service --> Controller: DadosDetalhePost
+Controller --> Client: 201 Created + Dados
+
+@enduml
+```
